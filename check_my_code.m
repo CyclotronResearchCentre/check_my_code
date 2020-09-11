@@ -46,7 +46,8 @@ function [error_code, file_function, cplx, percentage_comment] = check_my_code(R
     % an array with the complexity of each function and subfunction
     %
     % #### percentage_comment
-    % an array with the percentage of comment in each file
+    % an array with the percentage of comment in each file, with total
+    % number of lines and comment lines
     %
     % ## IMPLEMENTATION
     %
@@ -103,10 +104,11 @@ function [error_code, file_function, cplx, percentage_comment] = check_my_code(R
         filename = create_filename(m_file_ls, ifile);
 
         % get a rough idea of the percentage of comments
-        percentage_comment(ifile) = get_percentage_comment(filename);
+%         percentage_comment(ifile) = get_percentage_comment(filename);
+        percentage_comment(ifile,:) = get_percentage_comment(filename);
 
         fprintf('\n\n%s\n', m_file_ls(ifile).name);
-        fprintf('Percentage of comments: %2.0f percent\n', percentage_comment(ifile));
+        fprintf('Percentage of comments: %2.0f percent\n', percentage_comment(ifile,1));
 
         % get McCabe complexity
         msg = checkcode(filename, '-cyc');
@@ -126,7 +128,7 @@ function [error_code, file_function, cplx, percentage_comment] = check_my_code(R
 
     cplx_error_code = report_cplx(cplx, file_function, CPLX_THRS);
 
-    comment_error_code = report_comments(m_file_ls, percentage_comment, COMMENT_THRS);
+    comment_error_code = report_comments(m_file_ls, percentage_comment(:,1), COMMENT_THRS);
 
     error_code = [cplx_error_code comment_error_code];
 
@@ -147,7 +149,7 @@ function [error_code, file_function, cplx, percentage_comment] = check_my_code(R
 
 end
 
-function percentage = get_percentage_comment(filename)
+function out_val = get_percentage_comment(filename)
     % Now we check how many lines have a "percent" sign in them which could
     % indicate a comment of any sort
     FID = fopen(filename);
@@ -171,6 +173,7 @@ function percentage = get_percentage_comment(filename)
     fclose(FID);
 
     percentage = comment_count / line_count * 100;
+    out_val = [percentage, line_count, comment_count];
 end
 
 function [file_function, cplx] = get_complexity(file_function, cplx, msg, filename)
